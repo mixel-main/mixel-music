@@ -15,10 +15,10 @@ async def api_artwork(
 
     artwork_path = await Library.get_artwork(hash, type)
 
-    if artwork_path:
+    try:
         return FileResponse(artwork_path)
-    else:
-        bg_task.add_task(gen_artwork, hash, type)
+    except:
+        bg_task.add_task(gen_artwork, hash)
         return JSONResponse(
             status_code=status.HTTP_202_ACCEPTED,
             content={'message': 'extracting...'}
@@ -27,11 +27,6 @@ async def api_artwork(
 
 async def gen_artwork(
     hash: str,
-    type: int,
 ) -> None:
     
-    status = {}
-
     await LibraryTask.create_artwork(hash)
-    artwork_path = await Library.get_artwork(hash, type)
-    status[hash] = '' if artwork_path else 'Failed'

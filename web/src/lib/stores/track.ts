@@ -1,15 +1,7 @@
 import { writable, type Writable } from 'svelte/store';
 
-const trackHash: Writable<string | undefined> = writable();
-const trackTitle: Writable<string | undefined> = writable();
-const trackAlbum: Writable<string> = writable('Unknown Album');
-const trackArtist: Writable<string> = writable('Unknown Artist');
-const albumHash: Writable<string> = writable('');
-
-export {
-  trackHash,
-  trackTitle,
-  trackAlbum,
-  trackArtist,
-  albumHash,
-}
+export const hash: Writable<string> = writable('');
+export const title: Writable<string> = writable('');
+export const album: Writable<string> = writable('Unknown Album');
+export const artist: Writable<string> = writable('Unknown Artist');
+export const albumhash: Writable<string> = writable('');

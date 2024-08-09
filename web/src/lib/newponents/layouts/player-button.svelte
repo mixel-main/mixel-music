@@ -1,22 +1,21 @@
 <script lang="ts">
   import Icon from '@iconify/svelte';
-
-  export let title: string | undefined = undefined;
-  export let icon: string | undefined = undefined;
+  export let alt: string = '';
+  export let off: boolean = false;
+  export let icon: string = '';
+  export let text: string = '';
   export let disabled: boolean = false;
-  export let TurnOff: boolean = false;
   export let ControlButton: boolean = false;
   export let PrimaryButton: boolean = false;
-  export let text: string = '';
 </script>
 
 <button
-  {title}
   on:click
-  style:padding={ControlButton ? '3px' : ''}
-  style:width={ControlButton ? '32px' : ''}
-  style:height={ControlButton ? '32px' : ''}
-  style:color={TurnOff ? 'var(--color-dark-disabled)' : null}
+  title={alt}
+  class:off={off}
+  class:control={ControlButton}
+  class:primary={PrimaryButton}
+  aria-disabled={disabled}
   {disabled}
 >
   {#if icon}
@@ -35,15 +34,25 @@
     display: flex;
     padding: 12px;
     border: none;
-    background-color: transparent;
-    color: var(--color-dark-text-1);
     transition: 0.2s ease;
-    align-items: center;
+    color: var(--color-dark-text-1);
+    background-color: transparent;
     justify-content: center;
+    align-items: center;
   }
 
   button:hover {
     color: var(--color-dark-focus);
     transition: all 0.2s ease;
+  }
+
+  .control {
+    width: 32px;
+    height: 32px;
+    padding: 3px;
+  }
+
+  .off {
+    color: var(--color-dark-disabled);
   }
 </style>

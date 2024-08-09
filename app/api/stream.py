@@ -10,17 +10,12 @@ async def api_stream(
     range: str = Header(None),
 ) -> Response:
 
-    try:
-        stream_content, stream_headers = await Library.streaming(hash, range)
-        if stream_content:
-            return Response(
-                content=stream_content,
-                headers=stream_headers,
-                status_code=status.HTTP_206_PARTIAL_CONTENT
-            )
-        else:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-        
-    except Exception as error:
-        logs.error(error)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    stream_content, stream_headers = await Library.streaming(hash, range)
+    if stream_content:
+        return Response(
+            content=stream_content,
+            headers=stream_headers,
+            status_code=status.HTTP_206_PARTIAL_CONTENT
+        )
+    else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)

@@ -1,15 +1,18 @@
+import { getAlbumItem } from '$lib/api';
 import type { PageLoad } from './$types';
-import type { Album } from '$lib/interface';
 
 export const load: PageLoad = async ({ fetch, params }) => {
-  const albumHash: string = params.hash;
-  let albumItem: any = [];
+  const hash: string = params.hash
 
-  const getAlbum = await fetch(`http://localhost:2843/api/albums/${ albumHash }`);
-  albumItem = await getAlbum.json();
+  try {
+    const data = await getAlbumItem(fetch, hash);
 
-  return {
-    albumItem,
-    title: albumItem.album,
+    return {
+      item: data.item!,
+      title: data.item.album,
+    };
   }
-}
+  catch (error) {
+    console.error(error);
+  }
+};

@@ -1,6 +1,5 @@
 <script lang="ts">
   import PageHead from "./page-head.svelte";
-
   export let title: string | undefined = undefined;
 </script>
 

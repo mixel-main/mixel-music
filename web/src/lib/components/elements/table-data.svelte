@@ -1,13 +1,13 @@
 <script lang="ts">
-  export let text: string;
-  export let bold: boolean = false;
+  export let text: any;
+  export let sub: boolean = false;
   export let right: boolean = false;
   export let large: boolean = false;
 </script>
 
 <td
   class="table-item"
-  class:bold={bold}
+  class:sub={sub}
   class:right={right}
   class:large={large}
 >
@@ -28,8 +28,8 @@
     white-space: nowrap;
   }
 
-  .bold {
-    font-weight: bold;
+  .sub {
+    color: var(--color-dark-text-2);
   }
 
   .right {

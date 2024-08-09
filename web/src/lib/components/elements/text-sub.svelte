@@ -13,5 +13,6 @@
     font-size: 80%;
     text-overflow: ellipsis;
     overflow: hidden;
+    line-height: 150%;
   }
 </style>

@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 import asyncio
 
-from api import albums, artists, artwork, stream, tracks, count
+from api import albums, artists, artwork, stream, tracks
 from core.watcher import find_changes, watch_change
 from infra.config import *
 from infra.database import *
@@ -53,7 +53,6 @@ app.include_router(artists.router)
 app.include_router(artwork.router)
 app.include_router(stream.router)
 app.include_router(tracks.router)
-app.include_router(count.router)
 
 if __name__ == "__main__":
     uvicorn.run(

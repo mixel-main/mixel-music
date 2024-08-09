@@ -13,7 +13,7 @@ class Config(BaseSettings):
     I18N_DIR: Path = get_path('i18n')
     DATA_DIR: Path = get_path('config')
     LOG_PATH: Path = get_path('config', 'mixel-music.txt')
-    MUSIC_DIR: Path = get_path('assets')
+    MUSIC_DIR: Path = get_path('library')
 
     IMG_DIR: Path = get_path('config', 'artworks')
     IMG_SIZE: list[int] = [128, 300, 500]

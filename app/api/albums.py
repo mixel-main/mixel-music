@@ -10,30 +10,13 @@ async def api_album_list(
     item: int = Query(40, ge=1),
 ) -> dict | list[dict]:
     
-    try:
-        album_list = await Library.get_album_list(page, item)
-        if album_list:
-            return album_list
-        else:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
-    except Exception as error:
-        logs.error(error)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+    album_list = await Library.get_album_list(page, item)
+    return album_list
 
 @router.get('/albums/{hash}')
 async def api_album_info(
     hash: str,
 ) -> dict | list[dict]:
     
-    try:
-        album_info = await Library.get_album_info(hash)
-        if album_info:
-            return album_info
-        else:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
-    except Exception as error:
-        logs.error(error)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    album_info = await Library.get_album_info(hash)
+    return album_info

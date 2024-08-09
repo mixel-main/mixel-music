@@ -10,6 +10,7 @@
 	},
 	"devDependencies": {
 		"@iconify-json/iconoir": "^1.1.43",
+		"@iconify/json": "^2.2.235",
 		"@iconify/svelte": "^3.1.6",
 		"@neoconfetti/svelte": "^1.0.0",
 		"@sveltejs/adapter-auto": "^3.0.0",
@@ -20,6 +21,7 @@
 		"svelte-check": "^3.6.0",
 		"tslib": "^2.4.1",
 		"typescript": "^5.0.0",
+		"unplugin-icons": "^0.19.2",
 		"vite": "^5.0.3"
 	},
 	"type": "module"
