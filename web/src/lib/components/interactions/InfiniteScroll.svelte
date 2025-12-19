@@ -1,7 +1,12 @@
 <script lang="ts">
   import { createEventDispatcher, onMount, onDestroy } from 'svelte';
   
-  export let threshold: number = 2000;
+  interface Props {
+    threshold?: number;
+    children?: import('svelte').Snippet;
+  }
+
+  let { threshold = 2000, children }: Props = $props();
   const dispatch = createEventDispatcher();
   let contentContainer: HTMLElement;
 
@@ -26,4 +31,4 @@
   });
 </script>
 
-<slot />
+{@render children?.()}

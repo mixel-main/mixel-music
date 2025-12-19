@@ -9,7 +9,7 @@
   import ArtworkImage from "$lib/components/elements/ArtworkImage.svelte";
   import { _ } from 'svelte-i18n'
 
-  $: trk = $PlayerService;
+  let trk = $derived($PlayerService);
 </script>
 
 <div class="player-info">

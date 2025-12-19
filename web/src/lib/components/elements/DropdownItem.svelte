@@ -1,18 +1,26 @@
 <script lang="ts">
+  import { createBubbler } from 'svelte/legacy';
+
+  const bubble = createBubbler();
   import Icon from '@iconify/svelte';
-  export let icon: string | undefined = undefined;
-  export let href: string | undefined = undefined;
+  interface Props {
+    icon?: string | undefined;
+    href?: string | undefined;
+    children?: import('svelte').Snippet;
+  }
+
+  let { icon = undefined, href = undefined, children }: Props = $props();
 </script>
 
 <li>
-  <a {href} on:click>
+  <a {href} onclick={bubble('click')}>
     {#if icon}
       <span>
         <Icon {icon} />
       </span>
     {/if}
 
-    <slot />
+    {@render children?.()}
   </a>
 </li>
 

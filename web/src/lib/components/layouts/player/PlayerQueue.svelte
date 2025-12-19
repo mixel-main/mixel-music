@@ -9,8 +9,8 @@
   import { _ } from "svelte-i18n";
   import { onMount, onDestroy } from "svelte";
 
-  $: lists = $PlayerService;
-  let playerQueueElement;
+  let lists = $derived($PlayerService);
+  let playerQueueElement = $state();
 
   export const handlePlayerQueueClick = () => {
     $isQueueOpen = !$isQueueOpen;
@@ -57,12 +57,11 @@
         />
 
         <div class="left">
-          <!-- svelte-ignore a11y-missing-attribute -->
-          <!-- svelte-ignore a11y-no-static-element-interactions -->
-          <!-- svelte-ignore a11y-click-events-have-key-events -->
-          <a class="text bold" on:click={() =>
-            PlayerService.setTrack(index)
-          }>
+          <!-- svelte-ignore a11y_missing_attribute -->
+          <!-- svelte-ignore a11y_no_static_element_interactions -->
+          <!-- svelte-ignore a11y_click_events_have_key_events -->
+          <a class="text bold" onclick={() =>
+            PlayerService.setTrack(index)}>
               {trk.title}
           </a>
           <span class="text-sub">

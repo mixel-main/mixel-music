@@ -1,29 +1,44 @@
 <script lang="ts">
-  export let alt: string | undefined = undefined;
-  export let src: string | undefined = undefined;
-  export let width: string | number | undefined = undefined;
-  export let height: string | number | undefined = undefined;
-  export let FullCover: boolean = false;
-  export let lazyload: boolean = true;
+  import { createBubbler } from 'svelte/legacy';
+
+  const bubble = createBubbler();
+  interface Props {
+    alt?: string | undefined;
+    src?: string | undefined;
+    width?: string | number | undefined;
+    height?: string | number | undefined;
+    FullCover?: boolean;
+    lazyload?: boolean;
+  }
+
+  let {
+    alt = undefined,
+    src = undefined,
+    width = undefined,
+    height = undefined,
+    FullCover = false,
+    lazyload = true
+  }: Props = $props();
   
-  $: showArtwork = true;
+  let showArtwork = $state(true);
+  
 </script>
 
 
 <div style="height: {height}px;">
   {#if showArtwork}
-    <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <img
       loading={lazyload ? "lazy" : "eager"}
       {src}
       {alt}
       {width}
       {height}
-      on:click
-      on:keydown
-      on:mousedown
-      on:mouseleave
-      on:error={() => showArtwork = !showArtwork}
+      onclick={bubble('click')}
+      onkeydown={bubble('keydown')}
+      onmousedown={bubble('mousedown')}
+      onmouseleave={bubble('mouseleave')}
+      onerror={() => showArtwork = !showArtwork}
       class:full={FullCover}
     />
   {/if}

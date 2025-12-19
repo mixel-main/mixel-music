@@ -1,34 +1,37 @@
-from fastapi import Request, Response
+from fastapi import Request, Response, status
 from starlette.middleware.base import BaseHTTPMiddleware
-from services.auth import AuthService
-
 
 class CustomSessionMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next) -> Response:
-        # 이거 너무 아닌 것 같음
-        allowed = [
-            "/api/auth/signup",
-            "/api/auth/signin",
-            "/api/auth/logout",
-            "/api/auth/ping",
-        ]
+    ALLOWED_PATHS = (
+        "/api/auth/signup",
+        "/api/auth/signin",
+        "/api/auth/logout",
+        "/api/auth/ping",
+    )
 
-        if not request.url.path.startswith("/api") \
-            or any(request.url.path.startswith(path) for path in allowed):
+    async def dispatch(self, request: Request, call_next):
+        path = request.url.path
 
+        if not path.startswith("/api") or path.startswith(self.ALLOWED_PATHS):
             return await call_next(request)
 
         session_id = request.cookies.get("session")
         if not session_id:
-            response = Response(status_code=401)
-            response.delete_cookie("session")
-            return response
+            return self._unauthorized_response()
 
-        username = AuthService.get_user_id(session_id)
-        if not username:
-            response = Response(status_code=401)
-            response.delete_cookie("session")
-            return response
+        auth_service = request.app.state.auth_service
+        user_id = auth_service.get_user_id(session_id)
 
-        response = await call_next(request)
+        if not user_id:
+            return self._unauthorized_response(clear_cookie=True)
+
+        request.state.user_id = user_id
+
+        return await call_next(request)
+
+    @staticmethod
+    def _unauthorized_response(clear_cookie: bool = False) -> Response:
+        response = Response(status_code=status.HTTP_401_UNAUTHORIZED)
+        if clear_cookie:
+            response.delete_cookie("session")
         return response

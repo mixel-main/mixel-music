@@ -4,7 +4,11 @@
   import Button from "./elements/Button.svelte";
   import { _ } from 'svelte-i18n'
 
-  export let tracks: Tracks[];
+  interface Props {
+    tracks: Tracks[];
+  }
+
+  let { tracks }: Props = $props();
 </script>
 
 

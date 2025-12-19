@@ -6,7 +6,11 @@
   import { _ } from 'svelte-i18n'
   import PlayerService from "$lib/stores/stores";
 
-  export let track: Tracks;
+  interface Props {
+    track: Tracks;
+  }
+
+  let { track }: Props = $props();
 </script>
 
 

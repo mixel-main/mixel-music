@@ -2,22 +2,6 @@
   import SidebarList from './SidebarList.svelte';
   import SidebarItem from './SidebarItem.svelte';
   import { _ } from 'svelte-i18n';
-  import { getPlaylists } from '../../../requests';
-
-  let playlists = [];
-
-  async function fetchPlaylists() {
-    try {
-        const { response } = await getPlaylists(window.fetch, 1, 40);
-        playlists = response.playlists;
-    }
-    catch (error) {
-      console.error('Failed to fetch playlists:', error);
-      playlists = [];
-    }
-  }
-  
-  fetchPlaylists();
 </script>
 
 <div>
@@ -63,13 +47,13 @@
         {$_('sidebar.playlists.create')}
       </SidebarItem>
 
-      {#if playlists.length > 0}
+      <!-- {#if playlists.length > 0}
         {#each playlists as playlist}
           <SidebarItem href={`/playlists/${playlist.playlist_id}`} icon='iconoir:music-note'>
             {playlist.playlist_name}
           </SidebarItem>
         {/each}
-      {/if}
+      {/if} -->
     </div>
   </SidebarList>
 </div>

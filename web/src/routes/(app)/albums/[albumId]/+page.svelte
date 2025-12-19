@@ -5,7 +5,11 @@
   import AlbumFooter from '$lib/components/AlbumFooter.svelte';
   import { _ } from 'svelte-i18n';
 
-  export let data: PageData;
+  interface Props {
+    data: PageData;
+  }
+
+  let { data }: Props = $props();
 </script>
 
 

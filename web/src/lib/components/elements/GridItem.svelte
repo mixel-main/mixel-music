@@ -1,25 +1,38 @@
 <script lang="ts">
+  import { createBubbler } from 'svelte/legacy';
+
+  const bubble = createBubbler();
   import { getArtwork } from "$lib/tools";
   import ArtworkImage from "./ArtworkImage.svelte";
 
-  export let href: string | undefined = undefined;
-  export let alt: string | undefined = undefined;
-  export let src: string | undefined = undefined;
+  interface Props {
+    href?: string | undefined;
+    alt?: string | undefined;
+    src?: string | undefined;
+    children?: import('svelte').Snippet;
+  }
+
+  let {
+    href = undefined,
+    alt = undefined,
+    src = undefined,
+    children
+  }: Props = $props();
 </script>
 
 
 <div class="grid-item">
   {#if src}
     <a
-      data-sveltekit-preload-data tabindex="-1" on:click {href}>
+      data-sveltekit-preload-data tabindex="-1" onclick={bubble('click')} {href}>
       <ArtworkImage src={getArtwork(src, 300)} {alt}/>
     </a>
-    <slot />
+    {@render children?.()}
 
   {:else}
-    <!-- svelte-ignore a11y-missing-content -->
-    <a data-sveltekit-preload-data tabindex="-1" on:click {href} />
-    <slot />
+    <!-- svelte-ignore a11y_missing_content -->
+    <a data-sveltekit-preload-data tabindex="-1" onclick={bubble('click')} {href}></a>
+    {@render children?.()}
 
   {/if}
 </div>

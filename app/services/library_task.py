@@ -1,18 +1,18 @@
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-from core.database import db_conn
-from core.logging import logs
-from repos.library import LibraryRepo
-from tools.tags_handler import extract_tags
+from app.core.database import db_conn
+from app.core.logger import get_logger
+from app.repos.library import LibraryRepo
+from app.utils.tags import extract_tags
 
+logger = get_logger()
 
 class LibraryTask:
-    semaphore = asyncio.Semaphore(5)
+    semaphore = asyncio.Semaphore(4)
 
     def __init__(self, path: str) -> None:
         self.path = path
         self.tags = {}
-
 
     async def create_track(self) -> None:
         loop = asyncio.get_running_loop()
@@ -24,16 +24,14 @@ class LibraryTask:
                 async with db_conn() as conn:
                     repo = LibraryRepo(conn)
                     await repo.insert_track(self.tags)
-                    logs.debug(f"Track inserted: {self.tags.get('title')}")
-
+                    logger.debug(f"Track inserted: {self.tags.get('title')}")
 
     async def remove_track(self) -> None:
         async with self.semaphore:
             async with db_conn() as conn:
                 repo = LibraryRepo(conn)
                 await repo.delete_track(self.path)
-                logs.debug(f"Track removed: {self.path}")
-
+                logger.debug(f"Track removed: {self.path}")
 
     async def update_track(self) -> None:
         async with self.semaphore:
@@ -42,4 +40,4 @@ class LibraryTask:
                 await repo.delete_track(self.path)
                 await self.create_track()
 
-                logs.debug(f"Track recreated: {self.path}")
+                logger.debug(f"Track recreated: {self.path}")

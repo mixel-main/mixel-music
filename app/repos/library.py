@@ -1,4 +1,5 @@
-from core.database import (
+from typing import Any
+from app.core.database import (
     AsyncConnection,
     select,
     insert,
@@ -9,15 +10,15 @@ from core.database import (
     join,
     func,
 )
-from models import Album, Artist, Track
-from typing import Any
+from app.models import Album, Artist, Track
 
 class LibraryRepo:
     def __init__(self, conn: AsyncConnection) -> None:
         self.conn = conn
 
+    # Track
 
-    async def get_tracks(self, start: int, end: int) -> tuple[list[dict[str, Any]], int]:
+    async def list_tracks(self, offset: int, limit: int) -> tuple[list[dict[str, Any]], int]:
         db_query = await self.conn.execute(
             select(
                 Track.album,
@@ -29,8 +30,8 @@ class LibraryRepo:
                 Track.track_id,
             )
             .order_by(Track.title.asc())
-            .offset(start - 1)
-            .limit(end - (start - 1))
+            .offset(offset)
+            .limit(limit)
         )
         track_list = [dict(row) for row in db_query.mappings().all()]
 
@@ -40,7 +41,6 @@ class LibraryRepo:
         total = total_query.scalar_one()
         return track_list, total
     
-
     async def get_track(self, track_id: str) -> dict[str, Any]:
         track_item = {}
         db_query = await self.conn.execute(
@@ -52,9 +52,20 @@ class LibraryRepo:
             return dict(track_item)
         else:
             raise NoResultFound
+        
+    async def insert_track(self, track_data: dict[str, Any]) -> None:
+        await self.conn.execute(
+            insert(Track).values(**track_data)
+        )
 
+    async def delete_track(self, filepath: str) -> None:
+        await self.conn.execute(
+            delete(Track).where(Track.filepath == filepath)
+        )
 
-    async def get_albums(self, start: int, end: int) -> tuple[list[dict[str, Any]], int]:
+    # Album
+
+    async def list_albums(self, offset: int, limit: int) -> tuple[list[dict[str, Any]], int]:
         album_query = await self.conn.execute(
             select(
                 Album.album,
@@ -70,8 +81,8 @@ class LibraryRepo:
                 )
             )
             .order_by(Album.album.asc())
-            .offset(start - 1)
-            .limit(end - (start - 1))
+            .offset(offset)
+            .limit(limit)
         )
         album_list = [dict(row) for row in album_query.mappings().all()]
 
@@ -81,7 +92,6 @@ class LibraryRepo:
         total = total_query.scalar_one()
         return album_list, total
     
-
     async def get_album(self, album_id: str) -> dict[str, list[dict[str, Any] | None] | Any]:
         album_item = {}
         album_query = await self.conn.execute(
@@ -120,13 +130,24 @@ class LibraryRepo:
         album_item['tracks'] = [dict(row) for row in track_query.mappings().all()]
         return album_item
 
+    async def insert_album(self, album_data: dict[str, Any]) -> None:
+        await self.conn.execute(
+            Insert(Album).values(**album_data).on_conflict_do_nothing()
+        )
 
-    async def get_artists(self, start: int, end: int) -> tuple[list[dict[str, Any]], int]:
+    async def delete_album(self, album_id: str) -> None:
+        await self.conn.execute(
+            delete(Album).where(Album.album_id == album_id)
+        )
+
+    # Artist
+
+    async def list_artists(self, offset: int, limit: int) -> tuple[list[dict[str, Any]], int]:
         db_query = await self.conn.execute(
             select(Artist.__table__)
             .order_by(Artist.artist.asc())
-            .offset(start - 1)
-            .limit(end - (start - 1))
+            .offset(offset)
+            .limit(limit)
         )
         artist_list = [dict(row) for row in db_query.mappings().all()]
 
@@ -135,7 +156,6 @@ class LibraryRepo:
         )
         total = total_query.scalar_one()
         return artist_list, total
-
 
     async def get_artist(self, artist_id: str) -> dict[str, list[dict[str, Any]] | Any]:
         artist_item = {}
@@ -146,7 +166,7 @@ class LibraryRepo:
         tracks_data = track_query.mappings().all()
 
         if tracks_data:
-            # 해당 아이템 있으면 album_id 사용하여 앨범 검색
+            # Search album using album_id if tracks_data available
             album_ids = [track['album_id'] for track in tracks_data]
             album_from_tracks_query = await self.conn.execute(
                 select(
@@ -165,7 +185,7 @@ class LibraryRepo:
             if albums_data:
                 album = albums_data[0]
                 
-                # 앨범 albumartist_id 이용하여 아티스트 조회
+                # Lookup artist using albumartist_id
                 artist_query = await self.conn.execute(
                     select(Artist.__table__)
                     .where(Artist.artist_id == album['albumartist_id'])
@@ -176,10 +196,6 @@ class LibraryRepo:
                     artist_item = {
                         'artist': artist_data['artist'],
                         'artist_id': artist_id,
-                        'album_total': artist_data['album_total'],
-                        'track_total': artist_data['track_total'],
-                        'duration_total': artist_data['duration_total'],
-                        'filesize_total': artist_data['filesize_total'],
                         'albums': albums_data
                     }
         else:
@@ -187,47 +203,6 @@ class LibraryRepo:
 
         return artist_item
     
-
-    async def get_scan_info(self) -> Any:
-        result = await self.conn.execute(select(Track.filepath, Track.filesize))
-        result = result.all()
-
-        return result
-    
-
-    async def get_item_path(self, id: str) -> dict[Any, Any]:
-        result = await self.conn.execute(
-            select(Track.filepath)
-            .where(
-                or_(Track.album_id == id, Track.track_id == id)
-            )
-        )
-
-        data = result.mappings().first()
-        return dict(data) if data else {}
-
-    
-    async def get_path_by_track_id(self, track_id: str) -> str:
-        result = await self.conn.execute(
-            select(Track.filepath).where(Track.track_id == track_id)
-        )
-
-        row = result.scalars().first()
-        return row if row else ''
-
-
-    async def insert_track(self, track_data: dict[str, Any]) -> None:
-        await self.conn.execute(
-            insert(Track).values(**track_data)
-        )
-
-
-    async def insert_album(self, album_data: dict[str, Any]) -> None:
-        await self.conn.execute(
-            Insert(Album).values(**album_data).on_conflict_do_nothing()
-        )
-
-
     async def insert_artist(self, artist_data: dict[str, Any]) -> None:
         await self.conn.execute(
             Insert(Artist)
@@ -238,20 +213,34 @@ class LibraryRepo:
             )
         )
 
-
-    async def delete_track(self, filepath: str) -> None:
-        await self.conn.execute(
-            delete(Track).where(Track.filepath == filepath)
-        )
-
-
-    async def delete_album(self, album_id: str) -> None:
-        await self.conn.execute(
-            delete(Album).where(Album.album_id == album_id)
-        )
-
-
     async def delete_artist(self, artist_id: str) -> None:
         await self.conn.execute(
             delete(Artist).where(Artist.artist_id == artist_id)
         )
+    
+    # Library
+
+    async def get_scan_info(self) -> Any:
+        result = await self.conn.execute(select(Track.filepath, Track.filesize))
+        result = result.all()
+
+        return result
+    
+    async def get_item_path(self, item_id: str) -> dict[Any, Any]:
+        result = await self.conn.execute(
+            select(Track.filepath)
+            .where(
+                or_(Track.album_id == item_id, Track.track_id == item_id)
+            )
+        )
+
+        data = result.mappings().first()
+        return dict(data) if data else {}
+    
+    async def get_path_by_track_id(self, track_id: str) -> str:
+        result = await self.conn.execute(
+            select(Track.filepath).where(Track.track_id == track_id)
+        )
+
+        row = result.scalars().first()
+        return row if row else ''

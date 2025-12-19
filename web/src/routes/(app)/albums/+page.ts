@@ -2,17 +2,17 @@ import { getAlbums } from '$lib/requests';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ fetch, url }) => {
-  const start = parseInt(url.searchParams.get('start') ?? '1', 10);
-  const end = parseInt(url.searchParams.get('end') ?? '40', 10);
+  const offset = parseInt(url.searchParams.get('offset') ?? '1', 10);
+  const limit = parseInt(url.searchParams.get('limit') ?? '40', 10);
 
   try {
-    const data = await getAlbums(fetch, start, end);
+    const data = await getAlbums(fetch, offset, limit);
 
     return {
-      albums: data.response,
+      items: data.response,
       title: 'albums.title',
-      start: start,
-      end: end,
+      offset: offset,
+      limit: limit,
     };
   }
   catch (error) {

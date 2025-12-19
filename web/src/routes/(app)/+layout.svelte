@@ -6,8 +6,13 @@
   import Navbar from '$lib/components/layouts/navbar/Navbar.svelte';
   import Player from "$lib/components/layouts/player/Player.svelte";
   import PlayerQueue from "$lib/components/layouts/player/PlayerQueue.svelte";
+  interface Props {
+    children?: import('svelte').Snippet;
+  }
 
-  $: albumId = $page.params.albumId;
+  let { children }: Props = $props();
+
+  let albumId = $derived($page.params.albumId);
 </script>
 
 
@@ -20,7 +25,7 @@
 
   <div id="contents">
     <Navbar />
-    <slot />
+    {@render children?.()}
   </div>
 </div>
 

@@ -1,7 +1,12 @@
 <script lang="ts">
   import Icon from '@iconify/svelte';
-  export let icon: string | undefined = undefined;
-  export let href: string;
+  interface Props {
+    icon?: string | undefined;
+    href: string;
+    children?: import('svelte').Snippet;
+  }
+
+  let { icon = undefined, href, children }: Props = $props();
 </script>
 
 <li>
@@ -12,7 +17,7 @@
       </span>
     {/if}
 
-    <slot />
+    {@render children?.()}
   </a>
 </li>
 

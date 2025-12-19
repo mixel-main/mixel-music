@@ -1,17 +1,32 @@
 <script lang="ts">
+  import { createBubbler } from 'svelte/legacy';
+
+  const bubble = createBubbler();
   import Icon from '@iconify/svelte';
   
-  export let alt: string = '';
-  export let off: boolean = false;
-  export let icon: string = '';
-  export let text: string = '';
-  export let disabled: boolean = false;
-  export let ControlButton: boolean = false;
-  export let PrimaryButton: boolean = false;
+  interface Props {
+    alt?: string;
+    off?: boolean;
+    icon?: string;
+    text?: string;
+    disabled?: boolean;
+    ControlButton?: boolean;
+    PrimaryButton?: boolean;
+  }
+
+  let {
+    alt = '',
+    off = false,
+    icon = '',
+    text = '',
+    disabled = false,
+    ControlButton = false,
+    PrimaryButton = false
+  }: Props = $props();
 </script>
 
 <button
-  on:click
+  onclick={bubble('click')}
   title={alt}
   class:off={off}
   class:control={ControlButton}

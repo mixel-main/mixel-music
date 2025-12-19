@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import type { TracksResponse } from '$lib/interface';
+  import type { TrackListResponse } from '$lib/interface';
   import {
     removeLinkParams,
     getPaginatedList,
@@ -11,10 +11,14 @@
   import Button from '$lib/components/elements/Button.svelte';
   import { _ } from 'svelte-i18n';
 
-  export let data: PageData;
-  let tracks: TracksResponse = data.tracks;
-  let startNumber: number = data.start;
-  let endNumber: number = data.end
+  interface Props {
+    data: PageData;
+  }
+
+  let { data }: Props = $props();
+  let tracks: TrackListResponse = $state(data.items);
+  let startNumber: number = data.offset;
+  let endNumber: number = data.limit
 
   async function changePage(direction: 'next' | 'prev') {
     const { newStart, newEnd, response } = await getPaginatedList(
@@ -31,7 +35,7 @@
 
     if (response) {
       tracks = {
-        tracks: [...response.response.tracks],
+        items: [...response.response.items],
         total: response.response.total
       };
     }
@@ -51,10 +55,10 @@
 
 {#if data.tracks}
   <div style="margin-bottom: var(--space-s);">
-    <ControlsBar tracks={tracks.tracks} />
+    <ControlsBar tracks={tracks.items} />
   </div>
 
-  <TrackTable tracks={tracks.tracks} />
+  <TrackTable tracks={tracks.items} />
 
   <div class='bottom-ctl'>
     <Button

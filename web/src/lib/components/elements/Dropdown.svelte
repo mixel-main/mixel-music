@@ -3,15 +3,26 @@
   import { onMount, onDestroy, tick } from "svelte";
   import { fade } from "svelte/transition";
 
-  let isDropdownOpen = false;
-  export let dropdownStyle: string = 'round';
-  export let dropdownWidth: string = '';
-  export let dropdownOpenIcon: string | undefined = undefined;
-  export let dropdownCloseIcon: string | undefined = undefined;
+  let isDropdownOpen = $state(false);
+  interface Props {
+    dropdownStyle?: string;
+    dropdownWidth?: string;
+    dropdownOpenIcon?: string | undefined;
+    dropdownCloseIcon?: string | undefined;
+    children?: import('svelte').Snippet;
+  }
 
-  let dropdownElement: HTMLElement | null = null;
-  let buttonElement: HTMLElement | null = null;
-  let dropdownPosition = { top: 0, left: 0 };
+  let {
+    dropdownStyle = 'round',
+    dropdownWidth = '',
+    dropdownOpenIcon = undefined,
+    dropdownCloseIcon = $bindable(undefined),
+    children
+  }: Props = $props();
+
+  let dropdownElement: HTMLElement | null = $state(null);
+  let buttonElement: HTMLElement | null = $state(null);
+  let dropdownPosition = $state({ top: 0, left: 0 });
   let wrapElement: HTMLElement | null = null;
 
   if (dropdownCloseIcon === undefined && dropdownOpenIcon) {
@@ -113,7 +124,7 @@
     in:fade={{ duration: 100 }}
     out:fade={{ duration: 100 }}
   >
-    <slot />
+    {@render children?.()}
   </div>
 {/if}
 

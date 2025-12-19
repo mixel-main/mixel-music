@@ -1,20 +1,42 @@
 <script lang="ts">
+  import { createBubbler } from 'svelte/legacy';
+
+  const bubble = createBubbler();
   import Icon from "@iconify/svelte";
 
-  export let type: string | undefined = undefined;
-  export let href: string | undefined = undefined;
-  export let title: string | undefined = undefined;
-  export let button: string = '';
-  export let state: string = 'normal';
-  export let iconName: string = '';
-  export let iconSize: string = '';
-  export let width: string = '';
-  export let height: string = '';
-  export let preload: string = 'false';
+  interface Props {
+    type?: string | undefined;
+    href?: string | undefined;
+    title?: string | undefined;
+    button?: string;
+    state?: string;
+    iconName?: string;
+    iconSize?: string;
+    width?: string;
+    height?: string;
+    preload?: string;
+    children?: import('svelte').Snippet;
+    [key: string]: any
+  }
+
+  let {
+    type = undefined,
+    href = undefined,
+    title = undefined,
+    button = '',
+    state = 'normal',
+    iconName = '',
+    iconSize = '',
+    width = '',
+    height = '',
+    preload = 'false',
+    children,
+    ...rest
+  }: Props = $props();
 </script>
 
 
-<!-- svelte-ignore a11y-no-static-element-interactions -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <svelte:element
   class:round={button == 'round'}
   class:square={button == 'square'}
@@ -26,9 +48,9 @@
   title={title}
   style:width={width}
   style:height={button != 'round' ? height : width}
-  {...$$restProps}
-  on:click
-  on:focus
+  {...rest}
+  onclick={bubble('click')}
+  onfocus={bubble('focus')}
   {href}
 >
   {#if iconName}
@@ -38,7 +60,7 @@
     />
   {/if}
 
-  <slot />
+  {@render children?.()}
 </svelte:element>
 
 

@@ -1,14 +1,16 @@
 import asyncio
 import aiofiles.os
 from watchfiles import Change, awatch
-from core.config import Config
-from core.database import db_conn
-from core.logging import logs
-from repos.library import LibraryRepo
-from services.library_scan import LibraryScan
-from services.library_task import LibraryTask
-from tools.path_handler import Path, get_path, str_path, is_supported_file
+from app.core.config import get_config
+from app.core.database import db_conn
+from app.core.logger import get_logger
+from app.repos.library import LibraryRepo
+from app.services.library_scan import LibraryScan
+from app.services.library_task import LibraryTask
+from app.utils.path import Path, get_path, str_path, is_supported_file
 
+logger = get_logger()
+config = get_config()
 
 async def scanner() -> None:
     """
@@ -41,10 +43,9 @@ async def scanner() -> None:
     await library_scanner(props=path_props)
     asyncio.create_task(LibraryScan.perform_all())
 
-
 async def library_scanner(props: dict, path=None) -> None:
     if path is None:
-        path = Path(Config.LIBRARYDIR)
+        path = Path(config.LIBRARY_DIR)
 
     queue, tasks = [path], []
 
@@ -66,12 +67,11 @@ async def library_scanner(props: dict, path=None) -> None:
     if tasks:
         await asyncio.gather(*tasks)
 
-
 async def tracker() -> None:
-    logs.info("Started scanning for library.")
+    logger.info("Started scanning for library.")
 
     async for event_handler in awatch(
-        Config.LIBRARYDIR,
+        config.LIBRARY_DIR,
         recursive=True,
         force_polling=True,
     ):

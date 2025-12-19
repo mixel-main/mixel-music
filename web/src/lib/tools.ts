@@ -23,7 +23,7 @@ export function handleLogout(fetch: typeof window.fetch): void {
 
 
 export const getArtwork = (id: string, size: number): string => {
-  return `http://localhost:2843/api/library/artworks/${id}?size=${size.toString()}`;
+  return `http://localhost:8000/api/artwork/${id}?size=${size.toString()}`;
 };
 
 

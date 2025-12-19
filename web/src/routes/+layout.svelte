@@ -1,14 +1,19 @@
 <script lang="ts">
   import './style.css';
   import { onDestroy } from 'svelte';
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { afterNavigate } from '$app/navigation';
   import PlayerService from '$lib/stores/stores';
+  interface Props {
+    children?: import('svelte').Snippet;
+  }
+
+  let { children }: Props = $props();
 
   let previousPathname: string | null = null;
 
   afterNavigate(() => {
-    const currentPathname = $page.url.pathname;
+    const currentPathname = page.url.pathname;
     
     if (previousPathname == null || currentPathname !== previousPathname) {
       document.getElementById("contents")?.scrollIntoView({
@@ -27,7 +32,7 @@
 
 
 <div id="app">
-  <slot />
+  {@render children?.()}
 </div>
 
 

@@ -1,9 +1,10 @@
 import asyncio
-from models import Album, Artist, Track
-from core.database import db_conn, select, func, exists
-from core.logging import logs
-from repos.library import LibraryRepo
+from app.models import Album, Artist, Track
+from app.core.database import db_conn, func, exists, select
+from app.core.logger import get_logger
+from app.repos.library import LibraryRepo
 
+logger = get_logger()
 
 class LibraryScan:
     @staticmethod
@@ -14,9 +15,10 @@ class LibraryScan:
             return_exceptions=True,
         )
 
-
     @staticmethod
     async def perform_albums() -> None:
+        logger.debug("Performing Albums...")
+
         async with db_conn() as conn:
             db_query = (
                 select(
@@ -27,8 +29,6 @@ class LibraryScan:
                     Track.disc_total,
                     Track.track_total,
                     Track.year,
-                    func.sum(Track.duration).label('duration_total'),
-                    func.sum(Track.filesize).label('filesize_total'),
                 )
                 .where(
                     Track.album_id != '',
@@ -50,8 +50,6 @@ class LibraryScan:
                     'album_id': alb.album_id,
                     'albumartist_id': alb.albumartist_id,
                     'disc_total': alb.disc_total,
-                    'duration_total': alb.duration_total,
-                    'filesize_total': alb.filesize_total,
                     'year': alb.year,
                 }
 
@@ -65,8 +63,6 @@ class LibraryScan:
                     Track.disc_total,
                     Track.track_total,
                     Track.year,
-                    func.sum(Track.duration).label('duration_total'),
-                    func.sum(Track.filesize).label('filesize_total'),
                 )
                 .where(Track.album == '')
                 .group_by(
@@ -84,8 +80,6 @@ class LibraryScan:
                     'album_id': alb.album_id,
                     'albumartist_id': '',
                     'disc_total': alb.disc_total,
-                    'duration_total': alb.duration_total,
-                    'filesize_total': alb.filesize_total,
                     'year': alb.year,
                 }
 
@@ -103,21 +97,18 @@ class LibraryScan:
             orphan_albums = album_hash - track_hash
 
             for album_id in orphan_albums:
-                logs.debug("Removing Album... (%s)", album_id)
+                logger.debug("Removing Album... (%s)", album_id)
                 await LibraryRepo(conn).delete_album(album_id)
-
 
     @staticmethod
     async def perform_artists() -> None:
+        logger.debug("Performing Artists...")
+
         async with db_conn() as conn:
             db_query = (
                 select(
                     Track.albumartist_id,
                     Track.albumartist,
-                    func.count(Track.track_id).label('track_total'),
-                    func.count(func.distinct(Track.album_id)).label('album_total'),
-                    func.sum(Track.duration).label('duration_total'),
-                    func.sum(Track.filesize).label('filesize_total'),
                 )
                 .where(Track.albumartist != '')
                 .group_by(Track.albumartist_id, Track.albumartist)
@@ -130,13 +121,8 @@ class LibraryScan:
                 artist_data = {
                     'artist': art.albumartist,
                     'artist_id': art.albumartist_id,
-                    'album_total': art.album_total,
-                    'track_total': art.track_total,
-                    'duration_total': art.duration_total,
-                    'filesize_total': art.filesize_total,
                 }
                 
-                logs.debug(artist_data)
                 await LibraryRepo(conn).insert_artist(artist_data)
 
         async with db_conn() as conn:
@@ -154,5 +140,5 @@ class LibraryScan:
             orphan_albumartists = {row[0] for row in result}
 
             for artist_id in orphan_albumartists:
-                logs.debug("Removing Artist... (%s)", artist_id)
+                logger.debug("Removing Artist... (%s)", artist_id)
                 await LibraryRepo(conn).delete_artist(artist_id)

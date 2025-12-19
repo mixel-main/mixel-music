@@ -1,26 +1,30 @@
 <script lang="ts">
+  import { run } from 'svelte/legacy';
+
   import { goto } from "$app/navigation";
   import { _ } from "svelte-i18n";
 
-  $: email = '';
-  $: password = '';
-
-  let isInputFilled: boolean = false;
+  let email = $state('');
   
-  $: {
+  let password = $state('');
+  
+
+  let isInputFilled: boolean = $state(false);
+  
+  run(() => {
     if (email && password) {
       isInputFilled = true;
     }
     else {
       isInputFilled = false;
     }
-  }
+  });
 
   async function handleSubmit(event: SubmitEvent) {
     event.preventDefault();
     
     try {
-      const response = await fetch('http://localhost:2843/api/auth/signin', {
+      const response = await fetch('http://localhost:8000/api/auth/signin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -48,7 +52,7 @@
 </svelte:head>
 
 <div class="signin-form">
-  <form on:submit={handleSubmit}>
+  <form onsubmit={handleSubmit}>
     <input
       type="email"
       bind:value={email}
