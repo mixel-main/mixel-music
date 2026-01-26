@@ -22,7 +22,7 @@ class AuthService:
 
     def create_session(self, user_id: str) -> str:
         session_id = str(uuid.uuid4())
-        self.cache.set(session_id, user_id, expire=60 * 60 * 24 * 28)
+        self.cache.set(session_id, user_id, expire=60 * 60 * 24 * 28) # 28 Days
         return session_id
 
     def delete_session(self, session_id: str) -> None:
