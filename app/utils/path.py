@@ -1,8 +1,16 @@
 import re
 from pathlib import Path
-from pydantic_settings import BaseSettings
 
-ROOT_DIR: Path = (Path.cwd().resolve())
+
+def _find_root(start: Path | None = None) -> Path:
+    p = (start or Path(__file__)).resolve()
+    for d in [p, *p.parents]:
+        if (d / "pyproject.toml").exists() or (d / ".git").exists(): # DEV
+            return d
+    return Path.cwd().resolve()
+
+ROOT_DIR: Path = _find_root()
+
 
 def get_path(*args: str | Path, rel: bool = False, create_dir: bool = False) -> Path:
     """
@@ -25,6 +33,7 @@ def get_path(*args: str | Path, rel: bool = False, create_dir: bool = False) -> 
     
     return home.relative_to(ROOT_DIR) if rel else home
 
+
 def str_path(*args: str | Path, rel: bool = True) -> str:
     """
     Abstracts a path-like object or string path and returns it as a string.
@@ -41,6 +50,7 @@ def str_path(*args: str | Path, rel: bool = True) -> str:
 
     return home.as_posix()
 
+
 def get_filename(*args: str | Path) -> tuple[str, str, str]:
     home = ROOT_DIR
 
@@ -55,6 +65,7 @@ def get_filename(*args: str | Path) -> tuple[str, str, str]:
 
     return [name, stem, suffix.lower()]
 
+
 def is_supported_file(path: str) -> bool:
     from tinytag import TinyTag
 
@@ -63,10 +74,6 @@ def is_supported_file(path: str) -> bool:
     else:
         return False
 
-def create_dir(Config: BaseSettings) -> None:
-    Config.DATA_DIR.mkdir(exist_ok=True)
-    Config.LIBRARY_DIR.mkdir(exist_ok=True)
-    Config.ARTWORK_DIR.mkdir(exist_ok=True)
 
 def is_excluded_file(name: str) -> bool:
     """

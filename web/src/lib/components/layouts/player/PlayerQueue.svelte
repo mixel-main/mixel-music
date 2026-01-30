@@ -104,7 +104,7 @@
     box-shadow: 0 0 0 1px var(--dark-border) inset;
     background-color: var(--dark-queue);
     border-radius: var(--radius-m);
-    gap: 12px;
+    gap: 18px;
     overflow-y: scroll;
     padding: var(--space-s);
     backdrop-filter: blur(64px);

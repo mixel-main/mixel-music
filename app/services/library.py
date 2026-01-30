@@ -1,43 +1,71 @@
 import aiofiles
-from app.core.logger import get_logger
-from app.repos.library import LibraryRepo
+import aiofiles.os
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+from uuid import UUID
+
+from app.repos import LibraryRepos
+from app.services import BaseService
 from app.utils.path import get_path
+from app.utils.tags import extract_tags
 
-logger = get_logger()
 
-class LibraryService:
-    def __init__(self, repo: LibraryRepo) -> None:
+class LibraryService(BaseService):
+    semaphore = asyncio.Semaphore(4)
+
+    def __init__(self, repo: LibraryRepos) -> None:
         self.repo = repo
 
-    # Track
-
-    async def list_tracks(self, offset: int, limit: int):
-        return await self.repo.list_tracks(offset, limit)
-
-    async def get_track(self, id: str):
-        return await self.repo.get_track(id)
-
-    # Album
-
     async def list_albums(self, offset: int, limit: int):
-        return await self.repo.list_albums(offset, limit)
-
-    async def get_album(self, album_id: str):
-        return await self.repo.get_album(album_id)
-
-    # Artist
+        return await self.repo.album.list_albums(offset, limit)
+    
+    async def get_album(self, album_id: UUID):
+        return await self.repo.album.get_album(album_id)
 
     async def list_artists(self, offset: int, limit: int):
-        return await self.repo.list_artists(offset, limit)
+        return await self.repo.artist.list_artists(offset, limit)
+    
+    async def get_artist(self, artist_id: UUID):
+        return await self.repo.artist.get_artist(artist_id)
 
-    async def get_artist(self, artist_id: str):
-        return await self.repo.get_artist(artist_id)
+    async def list_tracks(self, offset: int, limit: int):
+        return await self.repo.track.list_tracks(offset, limit)
 
-    # Streaming
+    async def get_track(self, track_id: UUID):
+        return await self.repo.track.get_track(track_id)
+    
+    async def create_track(self, path) -> None:
+        loop = asyncio.get_running_loop()
+        with ThreadPoolExecutor() as executor:
+            tags = await loop.run_in_executor(executor, extract_tags, path)
 
-    async def stream_track(self, track_id: str, range_header: str | None):
-        path = await self.repo.get_path_by_track_id(track_id)
-        track = await self.repo.get_track(track_id)
+        if tags:
+            async with self.semaphore:
+                await self.repo.track.insert_track(tags)
+                self.logger.debug(f"Track inserted: {tags.get('title')}")
+
+    async def fs_events(self, events):
+        from app.services.library_scan import FsEventType
+
+        tasks = []
+
+        for e in events:
+            if e.type == FsEventType.DEL:
+                tasks.append(self.repo.track.delete_track(e.path))
+
+            elif e.type in (FsEventType.ADD, FsEventType.MOD):
+                real_path = get_path(e.path)
+                if await aiofiles.os.path.exists(real_path):
+                    tasks.append(self.repo.track.insert_track(e.path))
+                else:
+                    tasks.append(self.repo.track.delete_track(e.path))
+
+        if tasks:
+            await asyncio.gather(*tasks)
+
+    async def streaming(self, track_id: str, range_header: str | None):
+        path = await self.repo.track.get_filepath_by_track_id(track_id)
+        track = await self.repo.track.get_track(track_id)
 
         real_path = get_path(path)
         track_size = track["filesize"]
@@ -59,7 +87,7 @@ class LibraryService:
         end = min(end, track_size - 1)
 
         if start == 0:
-            logger.debug(
+            self.logger.debug(
                 'Streaming "%s" (%s-%s)',
                 track["title"],
                 start,

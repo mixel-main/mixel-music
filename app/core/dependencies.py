@@ -1,28 +1,34 @@
-from fastapi import Depends, Request
-from app.core.database import AsyncGenerator, db_conn
+from fastapi import Depends
+from contextlib import asynccontextmanager
+
+from app.core.database import AsyncGenerator, db_session
+from app.repos import LibraryRepos, AlbumRepo, ArtistRepo, TrackRepo
 from app.services.library import LibraryService
-from app.services.user import UserService
-from app.repos.library import LibraryRepo
-from app.repos.user import UserRepo
 
-async def get_library_repo() -> AsyncGenerator[LibraryRepo, None]:
-    async with db_conn() as conn:
-        yield LibraryRepo(conn)
 
-async def get_library_service(
-    repo: LibraryRepo = Depends(get_library_repo)
-) -> LibraryService:
-    return LibraryService(repo)
+async def get_album_repo() -> AsyncGenerator[AlbumRepo, None]:
+    async with db_session() as conn:
+        yield AlbumRepo(conn)
 
-async def get_auth_service(request: Request):
-    return request.app.state.auth_service
 
-async def get_user_repo() -> AsyncGenerator[UserRepo, None]:
-    async with db_conn() as conn:
-        yield UserRepo(conn)
+async def get_artist_repo() -> AsyncGenerator[ArtistRepo, None]:
+    async with db_session() as conn:
+        yield ArtistRepo(conn)
 
-async def get_user_service(
-    repo: UserRepo = Depends(get_user_repo),
-    auth = Depends(get_auth_service),
-) -> UserService:
-    return UserService(repo, auth)
+
+async def get_track_repo() -> AsyncGenerator[TrackRepo, None]:
+    async with db_session() as conn:
+        yield TrackRepo(conn)
+
+
+async def get_library_repo() -> AsyncGenerator[LibraryRepos, None]:
+    async with db_session() as conn:
+        yield LibraryRepos(conn)
+
+
+@asynccontextmanager
+async def get_library_service():
+    async with db_session() as conn:
+        repo = LibraryRepos(conn)
+        service = LibraryService(repo)
+        yield service

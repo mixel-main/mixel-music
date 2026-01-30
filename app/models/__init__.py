@@ -1,4 +1,3 @@
-from app.models.album import Album
-from app.models.artist import Artist
-from app.models.track import Track
-from app.models.user import User
+from .album import Album
+from .artist import Artist
+from .track import Track

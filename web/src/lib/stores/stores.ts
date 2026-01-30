@@ -136,7 +136,7 @@ function InitPlayerService() {
       const validIndex = Math.max(0, Math.min(index, state.lists.length - 1));
 
       if (track) {
-        audio.src = `http://localhost:8000/api/tracks/${track.track_id}/stream`;
+        audio.src = `http://localhost:2843/api/library/streaming/${track.track_id}`;
         audio.load();
 
         audio.onloadedmetadata = (): void => {

@@ -1,45 +1,81 @@
 from contextlib import asynccontextmanager
-from fastapi import HTTPException
 from typing import AsyncGenerator
-from sqlalchemy import text, func, select, insert, update, delete, or_, and_, join, exists
-from sqlalchemy.dialects.sqlite import Insert
-from sqlalchemy.exc import OperationalError, SQLAlchemyError, DatabaseError, NoResultFound
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncConnection
-from sqlalchemy.orm import sessionmaker, declarative_base
+
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import (
+    AsyncAttrs,
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+from sqlalchemy.orm import DeclarativeBase
+
 from app.core.config import get_config
 from app.core.logger import get_logger
 
-logger = get_logger()
+logger = get_logger(__name__)
 config = get_config()
 
-Base = declarative_base()
-engine = create_async_engine(config.DB_URL)
 
-session = sessionmaker(
-    class_=AsyncSession,
-    autocommit=False,
-    autoflush=False,
-    bind=engine,
-)
+class Base(AsyncAttrs, DeclarativeBase):
+    pass
+
+
+engine: AsyncEngine | None = None
+SessionLocal: async_sessionmaker[AsyncSession] | None = None
+
 
 @asynccontextmanager
-async def db_conn() -> AsyncGenerator[AsyncSession, None]:
-    async with session() as conn:
-        try:
-            yield conn
-            await conn.commit()
+async def db_session() -> AsyncGenerator[AsyncSession, None]:
+    if SessionLocal is None:
+        raise RuntimeError
 
-        except Exception as error:
-            if not isinstance(error, HTTPException):
-                logger.error("Error occurred: %s", error)
-                await conn.rollback()
+    async with SessionLocal() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
             raise
 
-async def connect_database() -> None:
+
+async def connect_db() -> None:
+    global engine, SessionLocal
+    if engine is not None:
+        return
+
+    config = get_config()
+
+    engine = create_async_engine(
+        config.DB_URL,
+        echo=False,
+        future=True,
+    )
+
+    SessionLocal = async_sessionmaker(
+        bind=engine,
+        class_=AsyncSession,
+        autoflush=False,
+        autocommit=False,
+        expire_on_commit=False,
+    )
+
+    import app.models
+
     async with engine.begin() as conn:
         await conn.execute(text("PRAGMA journal_mode=WAL;"))
         await conn.execute(text("PRAGMA busy_timeout=5000;"))
+        await conn.execute(text("PRAGMA synchronous=NORMAL;"))
         await conn.run_sync(Base.metadata.create_all)
 
-async def disconnect_database() -> None:
+
+async def disconnect_db() -> None:
+    global engine, SessionLocal
+    if engine is None:
+        return
+    
     await engine.dispose()
+
+    engine = None
+    SessionLocal = None

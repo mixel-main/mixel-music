@@ -1,24 +1,25 @@
 import asyncio
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Any
-from diskcache import Cache
+
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import HTMLResponse
-from app.api import api_router
-from app.core.config import get_config
-from app.core.database import connect_database, disconnect_database
+
+from app.core.config import ensure_dirs, get_config
+from app.core.database import connect_db, disconnect_db
 from app.core.logger import get_logger, setup_logging
-from app.core.middleware import CustomSessionMiddleware
-from app.services.auth import AuthService
-from app.services.scanner import scanner, tracker
+from app.services.library_scan import library_scan
 
 setup_logging()
-logger = get_logger()
-config = get_config()
 
-async def _bg(name: str, coro):
+config = get_config()
+logger = get_logger()
+
+
+async def _bg(name: str, coro) -> None:
     try:
         await coro
     except asyncio.CancelledError:
@@ -29,17 +30,12 @@ async def _bg(name: str, coro):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
-    config.DATA_DIR.mkdir(parents=True, exist_ok=True)
-    config.ARTWORK_DIR.mkdir(parents=True, exist_ok=True)
+    ensure_dirs()
 
-    app.state.session_cache = Cache(config.DATA_DIR)
-    app.state.auth_service = AuthService(app.state.session_cache)
-
-    await connect_database()
+    await connect_db()
 
     app.state.background_tasks = [
-        asyncio.create_task(_bg("scanner", scanner())),
-        asyncio.create_task(_bg("tracker", tracker())),
+        asyncio.create_task(_bg("library_scan", library_scan())),
     ]
 
     try:
@@ -47,17 +43,20 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
     finally:
         for t in app.state.background_tasks:
             t.cancel()
+
         await asyncio.gather(*app.state.background_tasks, return_exceptions=True)
 
-        await disconnect_database()
+        await disconnect_db()
+
 
 app = FastAPI(
     debug=config.DEBUG,
-    title=config.APP_NAME,
+    title="mixel-music",
     version=config.VERSION,
     lifespan=lifespan,
     docs_url=None
 )
+
 
 if config.DEBUG:
     app.add_middleware(
@@ -76,17 +75,13 @@ if config.DEBUG:
             swagger_css_url="https://cdn.jsdelivr.net/gh/mixel-music/swagger-ui-dark/dark.css",
         )
 
-app.add_middleware(CustomSessionMiddleware)
-app.include_router(api_router)
 
 if __name__ == "__main__":
-    import uvicorn
-
     uvicorn.run(
-        "app.main:app",
+        "app:app",
         host=config.HOST,
         port=config.PORT,
-        reload=config.DEBUG,
-        log_level=config.LOG_LEVEL.lower(),
+        reload=True,
+        log_level=config.LOG_LEVEL,
         log_config=None,
     )
