@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import json
 import mimetypes
@@ -7,7 +8,7 @@ from typing import Any
 
 from tinytag import TinyTag, Image, Images
 
-from app.utils.path import get_path, str_path
+from app.infra.path import get_path, str_path
 
 
 DATE_PATTERNS = {
@@ -199,25 +200,25 @@ def safe_list(extra, key, default='') -> str:
         return ''
 
 
-def extract_tags(path: str) -> dict[str, Any]:
+def _extract_tags(path: str) -> dict[str, Any]:
     filepath = str_path(path)
     real_path = get_path(path)
     content_type = get_mime(filepath)
 
     base: dict[str, Any] = {
         "album": "",
-        "album_id": None,
+        "album_id": '00000000-0000-0000-0000-000000000000',
         "albumartist": "",
-        "albumartist_id": None,
+        "albumartist_id": '00000000-0000-0000-0000-000000000000',
         "albumartistsort": "",
         "artist": "",
-        "artist_id": None,
+        "artist_id": '00000000-0000-0000-0000-000000000000',
         "artistsort": "",
         "barcode": "",
         "bitdepth": 0,
         "channels": 0,
         "comment": "",
-        "compliation": False,
+        "compilation": False,
         "composer": "",
         "content_type": content_type,
         "copyright": "",
@@ -230,16 +231,16 @@ def extract_tags(path: str) -> dict[str, Any]:
         "isrc": "",
         "label": "",
         "lyrics": "",
-        "musicbrainz_albumartistid": "",
-        "musicbrainz_albumid": "",
-        "musicbrainz_artistid": "",
-        "musicbrainz_discid": "",
-        "musicbrainz_originalalbumid": "",
-        "musicbrainz_originalartistid": "",
-        "musicbrainz_recordingid": "",
-        "musicbrainz_releasegroupid": "",
-        "musicbrainz_trackid": "",
-        "musicbrainz_workid": "",
+        "musicbrainz_albumartistid": "00000000-0000-0000-0000-000000000000",
+        "musicbrainz_albumid": "00000000-0000-0000-0000-000000000000",
+        "musicbrainz_artistid": "00000000-0000-0000-0000-000000000000",
+        "musicbrainz_discid": "00000000-0000-0000-0000-000000000000",
+        "musicbrainz_originalalbumid": "00000000-0000-0000-0000-000000000000",
+        "musicbrainz_originalartistid": "00000000-0000-0000-0000-000000000000",
+        "musicbrainz_recordingid": "00000000-0000-0000-0000-000000000000",
+        "musicbrainz_releasegroupid": "00000000-0000-0000-0000-000000000000",
+        "musicbrainz_trackid": "00000000-0000-0000-0000-000000000000",
+        "musicbrainz_workid": "00000000-0000-0000-0000-000000000000",
         "participants": "[]",
         "releasecountry": "",
         "samplerate": 0,
@@ -248,7 +249,7 @@ def extract_tags(path: str) -> dict[str, Any]:
         "titlesort": "",
         "totaldiscs": 0,
         "totaltracks": 0,
-        "track_id": None,
+        "track_id": '00000000-0000-0000-0000-000000000000',
         "tracknumber": 0,
         "year": 0,
     }
@@ -354,7 +355,7 @@ def extract_tags(path: str) -> dict[str, Any]:
     return base
 
 
-def extract_artwork(path: str) -> bytes | None:
+def _extract_imgs(path: str) -> bytes | None:
     try:
         tag: TinyTag = TinyTag.get(get_path(path), image=True)
 
@@ -378,3 +379,11 @@ def extract_artwork(path: str) -> bytes | None:
         
     except Exception:
         return None
+
+
+async def extract_tags(path: str) -> dict[str, Any]:
+    return await asyncio.to_thread(_extract_tags, path)
+
+
+async def extract_imgs(path: str) -> bytes | None:
+    return await asyncio.to_thread(_extract_imgs, path)

@@ -1,12 +1,12 @@
+import asyncio
 from dataclasses import dataclass
 from enum import Enum, auto
 
 from watchfiles import Change, awatch
 
 from app.core.config import get_config
-from app.core.dependencies import get_library_service
 from app.core.logger import get_logger
-from app.utils.path import str_path, is_supported_file
+from app.infra.path import str_path, is_supported_file
 
 
 class FsEventType(str, Enum):
@@ -51,7 +51,7 @@ def _normalize_batch(batch) -> list[FsEvent]:
     return events
 
 
-async def library_scan() -> None:
+async def watcher(event_queue: asyncio.Queue[list[FsEvent]]) -> None:
     logger = get_logger()
     config = get_config()
 
@@ -66,5 +66,4 @@ async def library_scan() -> None:
         if not events:
             continue
 
-        async with get_library_service() as service:
-            await service.fs_events(events)
+        await event_queue.put(events)

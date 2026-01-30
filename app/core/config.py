@@ -5,7 +5,7 @@ from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from app.utils.path import get_path
+from app.infra.path import get_path
 
 
 class Settings(BaseSettings):

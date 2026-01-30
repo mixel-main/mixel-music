@@ -59,9 +59,21 @@ class TrackRepo:
             .where(Track.track_id == track_id)
         )
 
+    async def update_track_path(self, track_path: str, track_data: dict[str, Any]) -> None:
+        await self.conn.execute(
+            update(Track)
+            .values(**track_data)
+            .where(Track.filepath == track_path)
+        )
+
     async def delete_track(self, track_id: UUID) -> None:
         await self.conn.execute(
             delete(Track).where(Track.track_id == track_id)
+        )
+
+    async def delete_track_path(self, track_path: UUID) -> None:
+        await self.conn.execute(
+            delete(Track).where(Track.filepath == track_path)
         )
 
     async def get_filepath_filesize(self) -> Any:

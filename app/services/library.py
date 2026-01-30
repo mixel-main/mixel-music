@@ -1,13 +1,13 @@
 import aiofiles
 import aiofiles.os
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
 from uuid import UUID
 
 from app.repos import LibraryRepos
 from app.services import BaseService
-from app.utils.path import get_path
-from app.utils.tags import extract_tags
+from app.infra.path import get_path
+from app.infra.tags import extract_tags
 
 
 class LibraryService(BaseService):
@@ -35,30 +35,36 @@ class LibraryService(BaseService):
         return await self.repo.track.get_track(track_id)
     
     async def create_track(self, path) -> None:
-        loop = asyncio.get_running_loop()
-        with ThreadPoolExecutor() as executor:
-            tags = await loop.run_in_executor(executor, extract_tags, path)
+        tags = await extract_tags(path)
 
         if tags:
+            post_value = {
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
+                "missing": False,
+            }
+
+            tags = tags | post_value
+
             async with self.semaphore:
                 await self.repo.track.insert_track(tags)
                 self.logger.debug(f"Track inserted: {tags.get('title')}")
 
     async def fs_events(self, events):
-        from app.services.library_scan import FsEventType
+        from app.infra.watcher import FsEventType
 
         tasks = []
 
         for e in events:
             if e.type == FsEventType.DEL:
-                tasks.append(self.repo.track.delete_track(e.path))
+                tasks.append(self.repo.track.delete_track_path(e.path))
 
             elif e.type in (FsEventType.ADD, FsEventType.MOD):
                 real_path = get_path(e.path)
                 if await aiofiles.os.path.exists(real_path):
-                    tasks.append(self.repo.track.insert_track(e.path))
+                    tasks.append(self.create_track(e.path))
                 else:
-                    tasks.append(self.repo.track.delete_track(e.path))
+                    tasks.append(self.repo.track.delete_track_path(e.path))
 
         if tasks:
             await asyncio.gather(*tasks)

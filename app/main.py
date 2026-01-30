@@ -11,7 +11,8 @@ from fastapi.responses import HTMLResponse
 from app.core.config import ensure_dirs, get_config
 from app.core.database import connect_db, disconnect_db
 from app.core.logger import get_logger, setup_logging
-from app.services.library_scan import library_scan
+from app.infra.watcher import watcher, FsEvent
+from app.services.fs_event import fs_event
 
 setup_logging()
 
@@ -34,8 +35,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
 
     await connect_db()
 
+    app.state.event_queue = asyncio.Queue(maxsize=200)
+
     app.state.background_tasks = [
-        asyncio.create_task(_bg("library_scan", library_scan())),
+        asyncio.create_task(_bg("watcher", watcher(app.state.event_queue))),
+        asyncio.create_task(_bg("fs_event", fs_event(app.state.event_queue))),
     ]
 
     try:
