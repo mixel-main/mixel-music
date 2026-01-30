@@ -1,17 +1,18 @@
 /data
-/library
-package
+/music
 /temp
-/test
 
 .env
 .env.*
+
 .DS_Store
-.svelte-kit
 .vscode
 
-build
-node_modules
+.venv
+__pycache__/
+
+node_modules/
+.svelte-kit/
+build/
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
-__pycache__

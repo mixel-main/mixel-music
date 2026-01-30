@@ -1,12 +1,10 @@
 import type {
-  AlbumsResponse,
+  AlbumListResponse,
   AlbumResponse,
-  TracksResponse,
+  TrackListResponse,
   TrackResponse,
-  ArtistsResponse,
-  ArtistResponse,
-  PlaylistsResponse,
-  PlaylistResponse,
+  ArtistListResponse,
+  ArtistResponse
 } from "./interface";
 import { apiFetch } from "./tools";
 
@@ -17,7 +15,7 @@ export async function postLogout(
   
   try {
     const postLogout = await fetch(
-      `http://localhost:2843/api/auth/logout`,
+      `http://localhost:8000/api/auth/logout`,
       {
         method: 'POST',
         credentials: 'include',
@@ -43,17 +41,17 @@ export async function getTracks(
   fetch: typeof window.fetch,
   start: number,
   end: number,
-): Promise<{response: TracksResponse;}> {
+): Promise<{response: TrackListResponse;}> {
 
   try {
     const fetchTracks = await apiFetch(fetch,
-      `http://localhost:2843/api/library/tracks?start=${start}&end=${end}`);
+      `http://localhost:8000/api/tracks?offset=${start}&limit=${end}`);
 
     if (!fetchTracks.ok) {
       throw new Error(fetchTracks.statusText);
     }
 
-    const response: TracksResponse = await fetchTracks.json();
+    const response: TrackListResponse = await fetchTracks.json();
 
     return {
       response,
@@ -63,7 +61,7 @@ export async function getTracks(
   catch (error) {
     return {
       response: {
-        "tracks": [],
+        "items": [],
         "total": 0,
       },
     }
@@ -78,7 +76,7 @@ export async function getTrack(
   
   try {
     const fetchTrack = await apiFetch(fetch,
-      `http://localhost:2843/api/library/tracks/${trackId}`);
+      `http://localhost:8000/api/tracks/${trackId}`);
 
     if (!fetchTrack.ok) {
       throw new Error(fetchTrack.statusText);
@@ -101,17 +99,17 @@ export async function getAlbums(
   fetch: typeof window.fetch,
   start: number,
   end: number,
-): Promise<{response: AlbumsResponse;}> {
+): Promise<{response: AlbumListResponse;}> {
 
   try {
     const fetchAlbums = await apiFetch(fetch,
-      `http://localhost:2843/api/library/albums?start=${start}&end=${end}`);
+      `http://localhost:8000/api/albums?offset=${start}&limit=${end}`);
 
     if (!fetchAlbums.ok) {
       throw new Error(fetchAlbums.statusText);
     }
 
-    const response: AlbumsResponse = await fetchAlbums.json();
+    const response: AlbumListResponse = await fetchAlbums.json();
 
     return {
       response,
@@ -121,7 +119,7 @@ export async function getAlbums(
   catch (error) {
     return {
       response: {
-        "albums": [],
+        "items": [],
         "total": 0,
       },
     }
@@ -136,7 +134,7 @@ export async function getAlbum(
 
   try {
     const fetchAlbum = await apiFetch(fetch,
-      `http://localhost:2843/api/library/albums/${albumId}`);
+      `http://localhost:8000/api/albums/${albumId}`);
 
     if (!fetchAlbum.ok) {
       throw new Error(fetchAlbum.statusText);
@@ -159,17 +157,17 @@ export async function getArtists(
   fetch: typeof window.fetch,
   start: number,
   end: number,
-): Promise<{response: ArtistsResponse;}> {
+): Promise<{response: ArtistListResponse;}> {
 
   try {
     const fetchArtists = await apiFetch(fetch,
-      `http://localhost:2843/api/library/artists?start=${start}&end=${end}`);
+      `http://localhost:8000/api/artists?offset=${start}&limit=${end}`);
 
     if (!fetchArtists.ok) {
       throw new Error(fetchArtists.statusText);
     }
 
-    const response: ArtistsResponse = await fetchArtists.json();
+    const response: ArtistListResponse = await fetchArtists.json();
 
     return {
       response,
@@ -179,7 +177,7 @@ export async function getArtists(
   catch (error) {
     return {
       response: {
-        "artists": [],
+        "items": [],
         "total": 0,
       },
     }
@@ -194,7 +192,7 @@ export async function getArtist(
 
   try {
     const fetchArtist = await apiFetch(fetch,
-      `http://localhost:2843/api/library/artists/${artistId}`);
+      `http://localhost:8000/api/artists/${artistId}`);
 
     if (!fetchArtist.ok) {
       throw new Error(fetchArtist.statusText);
@@ -209,37 +207,5 @@ export async function getArtist(
 
   catch (error) {
     throw error;
-  }
-};
-
-
-export async function getPlaylists(
-  fetch: typeof window.fetch,
-  start: number,
-  end: number,
-): Promise<{response: PlaylistsResponse;}> {
-
-  try {
-    const fetchArtists = await apiFetch(fetch,
-      `http://localhost:2843/api/playlists`);
-
-    if (!fetchArtists.ok) {
-      throw new Error(fetchArtists.statusText);
-    }
-
-    const response: PlaylistsResponse = await fetchArtists.json();
-
-    return {
-      response,
-    };
-  }
-
-  catch (error) {
-    return {
-      response: {
-        "playlists": [],
-        "total": 0,
-      },
-    }
   }
 };

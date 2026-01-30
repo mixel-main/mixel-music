@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { createBubbler } from 'svelte/legacy';
+
+  const bubble = createBubbler();
   import type { AlbumResponse } from "$lib/interface";
   import { 
     getArtistLink,
@@ -13,7 +16,11 @@
   import TrackDropdown from "./TrackDropdown.svelte";
   import { _ } from 'svelte-i18n';
 
-  export let list: AlbumResponse;
+  interface Props {
+    list: AlbumResponse;
+  }
+
+  let { list }: Props = $props();
 </script>
 
 
@@ -34,9 +41,9 @@
           </span>
         </TableBodyItem>
       <TableBodyItem size='xl'>
-        <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <!-- svelte-ignore a11y-missing-attribute -->
-        <a on:click={() =>
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <!-- svelte-ignore a11y_missing_attribute -->
+        <a onclick={() =>
           PlayerService.addTrack(
             [{
               album: list.album,
@@ -47,9 +54,8 @@
               title: item.title,
               track_id: item.track_id,
             }]
-          , true)
-        }
-        on:keydown>
+          , true)}
+        onkeydown={bubble('keydown')}>
           {item.title}
         </a>
       </TableBodyItem>

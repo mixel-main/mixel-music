@@ -1,20 +1,25 @@
 <script lang="ts">
-  export let size = 'm';
+  interface Props {
+    size?: string;
+    children?: import('svelte').Snippet;
+  }
 
-  $: flexSize = {
+  let { size = 'm', children }: Props = $props();
+
+  let flexSize = $derived({
     xs: 0.1,
     s: 1,
     m: 2,
     l: 3,
     xl: 5
-  }[size] || 1;
+  }[size] || 1);
 
-  $: additionalStyle = size === 'xs' ? 'text-overflow: clip; max-height: 50px;' : '';
+  let additionalStyle = $derived(size === 'xs' ? 'text-overflow: clip; max-height: 50px;' : '');
 </script>
 
 
 <div style={`flex: ${flexSize}; ${additionalStyle}`}>
-  <slot />
+  {@render children?.()}
 </div>
 
 

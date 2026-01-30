@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import type { AlbumsResponse } from '$lib/interface';
+  import type { AlbumListResponse } from '$lib/interface';
   import { getPaginatedList, getAlbumLink, getArtistLink } from '$lib/tools';
   import InfiniteScroll from '$lib/components/interactions/InfiniteScroll.svelte';
   import PageTitle from '$lib/components/elements/PageTitle.svelte';
@@ -9,9 +9,13 @@
   import GridItemDetail from '$lib/components/elements/GridItemDetail.svelte';
   import { _ } from 'svelte-i18n';
 
-  export let data: PageData;
-  let albums: AlbumsResponse = data.albums;
-  let startNumber = data.start;
+  interface Props {
+    data: PageData;
+  }
+
+  let { data }: Props = $props();
+  let albums: AlbumListResponse = $state(data.items);
+  let startNumber = data.offset;
   let loading = false;
 
   async function loadMoreAlbums() {
@@ -25,7 +29,7 @@
     startNumber = newStart;
     if (response) {
       albums = {
-        albums: [...albums.albums, ...response.response.albums],
+        items: [...albums.items, ...response.response.items],
         total: response.response.total,
       };
     }
@@ -42,20 +46,23 @@
 <PageTitle title={$_(data.title)} />
 
 <InfiniteScroll threshold={100} on:loadMore={loadMoreAlbums}>
-  <GridWrap items={albums.albums}>
-    <GridItem
-      let:item
-      slot="GridItem"
-      href={getAlbumLink(item.album_id)}
-      src={item.album_id}
-      alt={item.album ? item.album : $_('unknown_album')}
-    >
-      <GridItemDetail
-        title={item.album ? item.album : $_('unknown_album')}
-        titleHref={getAlbumLink(item.album_id)}
-        sub={item.albumartist}
-        subHref={getArtistLink(item.albumartist_id)}
-      />
-    </GridItem>
-  </GridWrap>
+{#snippet renderAlbum({ item })}
+  <GridItem
+    href={getAlbumLink(item.album_id)}
+    src={item.album_id}
+    alt={item.album ?? $_('unknown_album')}
+  >
+    <GridItemDetail
+      title={item.album ?? $_('unknown_album')}
+      titleHref={getAlbumLink(item.album_id)}
+      sub={item.albumartist}
+      subHref={getArtistLink(item.albumartist_id)}
+    />
+  </GridItem>
+{/snippet}
+
+<GridWrap
+  items={albums.items}
+  renderItem={renderAlbum}
+/>
 </InfiniteScroll>

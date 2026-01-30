@@ -1,3 +1,4 @@
+<!-- @migration-task Error while migrating Svelte code: This migration would change the name of a slot making the component unusable -->
 <script lang="ts">
   import GridItem from "./GridItem.svelte";
   export let items = [];
@@ -6,12 +7,13 @@
 
   $: displayedItems = items.slice(0, itemsPerPage);
   $: emptySlots = items.length < 8 ? 8 - items.length : 0;
+  export let renderItem: import('svelte').Snippet;
 </script>
 
 
 <div bind:this={gridContainer}>
-  {#each displayedItems as item}
-    <slot name="GridItem" {item}></slot>
+  {#each items as item}
+    {@render renderItem({ item })}
   {/each}
 
   {#if emptySlots > 0}

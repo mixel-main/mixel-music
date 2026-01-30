@@ -1,14 +1,24 @@
 <script lang="ts">
-  export let center: boolean = false;
-  export let title: string;
-  export let titleHref: any = undefined;
-  export let sub: string | undefined = undefined;
-  export let subHref: any = undefined;
+  interface Props {
+    center?: boolean;
+    title: string;
+    titleHref?: any;
+    sub?: string | undefined;
+    subHref?: any;
+  }
+
+  let {
+    center = false,
+    title,
+    titleHref = undefined,
+    sub = undefined,
+    subHref = undefined
+  }: Props = $props();
 </script>
 
 
-<!-- svelte-ignore a11y-click-events-have-key-events -->
-<!-- svelte-ignore a11y-no-static-element-interactions -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class:center={center}>
   <a href={titleHref} class="text bold">{title}</a>
   {#if sub}

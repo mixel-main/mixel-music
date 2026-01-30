@@ -1,60 +1,68 @@
-from fastapi import FastAPI
-from fastapi.responses import FileResponse, HTMLResponse
-from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.middleware.cors import CORSMiddleware
+import asyncio
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Any
+
 import uvicorn
-import asyncio
-import toml
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.responses import HTMLResponse
 
-from api import api_router
-from core.config import Config
-from core.database import connect_database, disconnect_database
-from core.logging import log_file_handler, logs
-from core.middleware import CustomSessionMiddleware
-from services.scanner import scanner, tracker
-from tools.path_handler import create_dir, get_path
+from app.core.config import ensure_dirs, get_config
+from app.core.database import connect_db, disconnect_db
+from app.core.logger import get_logger, setup_logging
+from app.infra.watcher import watcher, FsEvent
+from app.services.fs_event import fs_event
+
+setup_logging()
+
+config = get_config()
+logger = get_logger()
 
 
-with open('pyproject.toml') as f:
-    pyproject = toml.load(f)
-    VERSION = pyproject['tool']['poetry']['version']
-
+async def _bg(name: str, coro) -> None:
+    try:
+        await coro
+    except asyncio.CancelledError:
+        logger.info("Task '%s' cancelled", name)
+        raise
+    except Exception:
+        logger.exception("Task '%s' crashed", name)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
-    create_dir(Config)
-    log = log_file_handler()
-    await connect_database()
+    ensure_dirs()
 
-    asyncio.create_task(scanner())
-    asyncio.create_task(tracker())
+    await connect_db()
+
+    app.state.event_queue = asyncio.Queue(maxsize=200)
+
+    app.state.background_tasks = [
+        asyncio.create_task(_bg("watcher", watcher(app.state.event_queue))),
+        asyncio.create_task(_bg("fs_event", fs_event(app.state.event_queue))),
+    ]
 
     try:
         yield
     finally:
-        await disconnect_database()
-        log.close()
+        for t in app.state.background_tasks:
+            t.cancel()
 
-        tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
-        [task.cancel() for task in tasks]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        for result in results:
-            if isinstance(result, Exception) and not isinstance(result, asyncio.CancelledError):
-                logs.error(f"Error During Shutdown, {result}")
+        await asyncio.gather(*app.state.background_tasks, return_exceptions=True)
+
+        await disconnect_db()
 
 
 app = FastAPI(
-    title='mixel-music',
-    debug=Config.DEBUG,
-    version=VERSION,
+    debug=config.DEBUG,
+    title="mixel-music",
+    version=config.VERSION,
     lifespan=lifespan,
-    docs_url=None,
+    docs_url=None
 )
 
 
-if Config.DEBUG:
+if config.DEBUG:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["http://localhost:5173"],
@@ -65,31 +73,19 @@ if Config.DEBUG:
 
     @app.get("/docs", include_in_schema=False)
     async def custom_swagger_docs() -> HTMLResponse:
-        """
-        Apply favicon and dark theme for swagger docs.
-        """
         return get_swagger_ui_html(
             openapi_url=app.openapi_url,
-            title=f'API • {app.title}',
-            swagger_css_url='https://cdn.jsdelivr.net/gh/mixel-music/swagger-ui-dark/dark.css',
-            swagger_favicon_url='/favicon.ico',
+            title=f"API • {app.title}",
+            swagger_css_url="https://cdn.jsdelivr.net/gh/mixel-music/swagger-ui-dark/dark.css",
         )
-
-    @app.get('/favicon.ico', include_in_schema=False)
-    async def favicon() -> FileResponse:
-        return FileResponse(get_path('assets', 'favicon.ico'))
-
-
-app.add_middleware(CustomSessionMiddleware)
-app.include_router(api_router)
 
 
 if __name__ == "__main__":
     uvicorn.run(
-        "main:app",
-        host=Config.HOST,
-        port=Config.PORT,
-        reload=Config.DEBUG,
-        log_level=Config.LOGLEVEL,
+        "app:app",
+        host=config.HOST,
+        port=config.PORT,
+        reload=True,
+        log_level=config.LOG_LEVEL,
         log_config=None,
     )

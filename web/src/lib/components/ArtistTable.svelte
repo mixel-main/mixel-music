@@ -8,7 +8,11 @@
   import TableBodyItem from "./elements/TableBodyItem.svelte";
   import { _ } from 'svelte-i18n';
 
-  export let artists: Artists[];
+  interface Props {
+    artists: Artists[];
+  }
+
+  let { artists }: Props = $props();
 </script>
 
 

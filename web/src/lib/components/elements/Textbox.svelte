@@ -1,12 +1,25 @@
 <script lang="ts">
-  export let type: string = 'text';
-  export let name: string = 'text';
-  export let placeholder: string = '';
-  export let disabled: boolean = false;
-  export let width: string = '100%';
-  export let value: string = '';
-  export let autocomplete: string | undefined = undefined;
-  export let required: boolean = false;
+  interface Props {
+    type?: string;
+    name?: string;
+    placeholder?: string;
+    disabled?: boolean;
+    width?: string;
+    value?: string;
+    autocomplete?: string | undefined;
+    required?: boolean;
+  }
+
+  let {
+    type = 'text',
+    name = 'text',
+    placeholder = '',
+    disabled = false,
+    width = '100%',
+    value = $bindable(''),
+    autocomplete = undefined,
+    required = false
+  }: Props = $props();
 </script>
 
 

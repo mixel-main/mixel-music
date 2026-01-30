@@ -2,11 +2,21 @@
   import { convertDateTime, convertFileSize } from "$lib/tools";
   import { _ } from "svelte-i18n";
 
-  export let comment: string = '';
-  export let year: number = 0;
-  export let trackTotal: number = 0;
-  export let durationTotal: number = 0;
-  export let fileSizeTotal: number = 0;
+  interface Props {
+    comment?: string;
+    year?: number;
+    trackTotal?: number;
+    durationTotal?: number;
+    fileSizeTotal?: number;
+  }
+
+  let {
+    comment = '',
+    year = 0,
+    trackTotal = 0,
+    durationTotal = 0,
+    fileSizeTotal = 0
+  }: Props = $props();
 </script>
 
 

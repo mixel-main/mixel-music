@@ -4,13 +4,23 @@
   import ControlsBar from "./ControlsBar.svelte";
   import { getArtistLink, getArtwork } from "$lib/tools";
   import { _ } from "svelte-i18n";
-  export let album: string;
-  export let albumId: string;
-  export let albumArtist: string;
-  export let albumArtistId: string;
-  export let tracks: Tracks[] | undefined = undefined;
+  interface Props {
+    album: string;
+    albumId: string;
+    albumArtist: string;
+    albumArtistId: string;
+    tracks?: Tracks[] | undefined;
+  }
 
-  $: artwork = getArtwork(albumId, 500);
+  let {
+    album,
+    albumId,
+    albumArtist,
+    albumArtistId,
+    tracks = undefined
+  }: Props = $props();
+
+  let artwork = $derived(getArtwork(albumId, 500));
 </script>
 
 

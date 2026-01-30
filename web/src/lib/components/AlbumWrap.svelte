@@ -1,7 +1,11 @@
 <script lang="ts">
   import { getArtwork } from '$lib/tools';
 
-  export let albumId: string;
+  interface Props {
+    albumId: string;
+  }
+
+  let { albumId }: Props = $props();
   let imageUrl = getArtwork(albumId, 500);
 </script>
 
@@ -9,7 +13,7 @@
 <div
   class="album-wrap"
   style="background-image: url({imageUrl})"
-/>
+></div>
 
 
 <style>

@@ -7,7 +7,11 @@
   import GridItemDetail from '$lib/components/elements/GridItemDetail.svelte';
   import { _ } from 'svelte-i18n'
 
-  export let data: PageData;
+  interface Props {
+    data: PageData;
+  }
+
+  let { data }: Props = $props();
 </script>
 
 <svelte:head>
@@ -18,19 +22,21 @@
 
 {#if data.item}
   <GridWrap items={data.item.albums}>
-    <GridItem
-      let:item
-      slot="GridItem"
-      href={getAlbumLink(item.album_id)}
-      src={item.album_id}
-      alt={item.album}
-      lazyload
-    >
-      <GridItemDetail
-        title={item.album ? item.album : $_('unknown_album')}
-        titleHref={getAlbumLink(item.album_id)}
-        sub={item.year != 0 ? $_('info.year',{values: {year: item.year}}) : $_('unknown_year')}
-      />
-    </GridItem>
+    {#snippet GridItem({ item })}
+        <GridItem
+        
+        
+        href={getAlbumLink(item.album_id)}
+        src={item.album_id}
+        alt={item.album}
+        lazyload
+      >
+        <GridItemDetail
+          title={item.album ? item.album : $_('unknown_album')}
+          titleHref={getAlbumLink(item.album_id)}
+          sub={item.year != 0 ? $_('info.year',{values: {year: item.year}}) : $_('unknown_year')}
+        />
+      </GridItem>
+      {/snippet}
   </GridWrap>
 {/if}

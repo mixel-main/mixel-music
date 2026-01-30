@@ -1,7 +1,11 @@
 <script lang="ts">
-  export let title: string;
-  export let inline: boolean = false;
-  export let size: string = 'xl';
+  interface Props {
+    title: string;
+    inline?: boolean;
+    size?: string;
+  }
+
+  let { title, inline = false, size = 'xl' }: Props = $props();
 </script>
 
 

@@ -11,8 +11,12 @@
   import Button from '$lib/components/elements/Button.svelte';
   import { _ } from 'svelte-i18n';
 
-  export let data: PageData;
-  let artists: ArtistsResponse = data.artists;
+  interface Props {
+    data: PageData;
+  }
+
+  let { data }: Props = $props();
+  let artists: ArtistsResponse = $state(data.artists);
   let startNumber: number = data.start;
   let endNumber: number = data.end
 

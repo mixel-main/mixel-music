@@ -5,7 +5,7 @@
   import PlayerInfo from '$lib/components/layouts/player/PlayerInfo.svelte';
   import { _ } from 'svelte-i18n'
 
-  $: trk = $PlayerService;
+  let trk = $derived($PlayerService);
 </script>
 
 <div class="player">
@@ -47,11 +47,10 @@
     </div>
 
     <input
-      on:input={(event) =>
+      oninput={(event) =>
         PlayerService.seek
           (parseFloat(event.target.value)
-        )
-      }
+        )}
       type="range"
       min="0"
       max={trk.duration}
@@ -66,7 +65,7 @@
     <div class="player-settings">
       <div class="player-volume">
         <input
-          on:input={(event) => {
+          oninput={(event) => {
             PlayerService.volume(
               parseFloat(event.target.value)
             )
